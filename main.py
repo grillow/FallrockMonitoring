@@ -34,6 +34,7 @@ async def on_user_update(before: discord.User, after: discord.User):
     # when name changes
     session_manager.user_updated(after)
 
+
 @dd.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     if before.channel is None and after.channel is not None:
@@ -46,5 +47,6 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             session_manager.member_connected(after.channel, member)
         else:
             session_manager.member_updated(after.channel, member)
+
 
 dd.run(os.getenv('DISCORD_TOKEN'))
