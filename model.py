@@ -27,7 +27,7 @@ def discord_member_to_user(member: discord.Member):
 
 def build_user_string(user: UserState):
     def status(s: bool):
-        return '🟩' if s else '🟥'
+        return "◻️" if s else "◼"
 
     text = ''
     mic = not (user.mute or user.self_mute)
