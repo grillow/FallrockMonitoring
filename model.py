@@ -158,8 +158,10 @@ class SessionManager:
         for guild in await user.mutual_guilds():
             for member in guild.members:
                 if member.id == user.id:
-                    await self.sessions[member.voice.channel.id].user_updated(member.id, discord_member_to_user(member))
-                    return
+                    if member.voice is not None:
+                        await self.sessions[member.voice.channel.id].user_updated(member.id,
+                                                                                  discord_member_to_user(member))
+                        return
 
     async def member_voice_updated(self, channel: discord.VoiceChannel, member: discord.Member):
         if channel.id in self.sessions:
