@@ -6,43 +6,49 @@ import os
 
 load_dotenv()
 
-# Telegram
+discord_token = os.getenv('DISCORD_TOKEN')
+discord_guild_ids = set(map(int, os.getenv('DISCORD_GUILD_IDS').replace(' ', '').split(',')))
+telegram_token = os.getenv('TELEGRAM_TOKEN')
+telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
-tg = telegram.Bot(token=os.getenv('TELEGRAM_TOKEN'))
 
-# Discord
-
+tg = telegram.Bot(token=telegram_token)
 dd = discord.Client(self_bot=True)
 
-session_manager = model.SessionManager(telegram_api=tg, telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'))
+session_manager = model.SessionManager(telegram_api=tg, telegram_chat_id=telegram_chat_id)
 
 
 @dd.event
 async def on_ready():
     print(f'Logged in as {dd.user}')
     for guild in dd.guilds:
-        for channel in guild.voice_channels:
-            session_manager.create_session(channel)
+        if guild.id in discord_guild_ids:
+            for channel in guild.voice_channels:
+                session_manager.create_session(channel)
 
 
 @dd.event
 async def on_user_update(before: discord.User, after: discord.User):
-    # when name changes
     session_manager.user_updated(after)
 
 
 @dd.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     if before.channel is None and after.channel is not None:
-        session_manager.member_connected(after.channel, member)
+        if after.channel.guild.id in discord_guild_ids:
+            session_manager.member_connected(after.channel, member)
     elif before.channel is not None and after.channel is None:
-        session_manager.member_disconnected(before.channel, member)
+        if before.channel.guild.id in discord_guild_ids:
+            session_manager.member_disconnected(before.channel, member)
     elif before.channel is not None and after.channel is not None:
         if before.channel != after.channel:
-            session_manager.member_disconnected(before.channel, member)
-            session_manager.member_connected(after.channel, member)
+            if before.channel.guild.id in discord_guild_ids:
+                session_manager.member_disconnected(before.channel, member)
+            if after.channel.guild.id in discord_guild_ids:
+                session_manager.member_connected(after.channel, member)
         else:
-            session_manager.member_updated(after.channel, member)
+            if after.channel.guild.id in discord_guild_ids:
+                session_manager.member_updated(after.channel, member)
 
 
-dd.run(os.getenv('DISCORD_TOKEN'))
+dd.run(discord_token)
