@@ -12,11 +12,7 @@ tg = telegram.Bot(token=os.getenv('TELEGRAM_TOKEN'))
 
 # Discord
 
-intents = discord.Intents.none()
-intents.voice_states = True
-intents.guilds = True
-intents.members = True
-dd = discord.Client(intents=intents)
+dd = discord.Client(self_bot=True)
 
 session_manager = model.SessionManager(telegram_api=tg, telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'))
 
