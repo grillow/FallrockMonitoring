@@ -81,37 +81,37 @@ class TelegramMessage:
 
 
 class VoiceSession:
-    def __init__(self, server_name: str, channel_name: str, telegram_api, telegram_chat_id, connected_users=None):
+    def __init__(self, server_name: str, channel_name: str, telegram_api, telegram_chat_id, connected_members=None):
         self.server_name = server_name
         self.channel_name = channel_name
         self.started = datetime.datetime.now()
         self.ended = None
-        self.connected_users = {}
-        if connected_users is not None:
-            for u in connected_users:
-                self.connected_users[u.id] = u
+        self.connected_members = {}
+        if connected_members is not None:
+            for u in connected_members:
+                self.connected_members[u.id] = u
         self.telegram_message = TelegramMessage(api=telegram_api, chat_id=telegram_chat_id, started=self.started,
                                                 server_name=server_name,
                                                 channel_name=self.channel_name,
-                                                connected_users=self.connected_users.values())
+                                                connected_users=self.connected_members.values())
         self.dead = False
 
     def user_connected(self, user_id: int, user: UserState):
-        self.connected_users[user_id] = user
-        self.telegram_message.set_content(self.connected_users.values(), self.server_name, self.channel_name,
+        self.connected_members[user_id] = user
+        self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
                                           self.started, self.ended)
 
     def user_updated(self, user_id: int, user: UserState):
-        self.connected_users[user_id] = user
-        self.telegram_message.set_content(self.connected_users.values(), self.server_name, self.channel_name,
+        self.connected_members[user_id] = user
+        self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
                                           self.started, self.ended)
 
     def user_disconnected(self, user_id: int):
-        del self.connected_users[user_id]
-        if len(self.connected_users) == 0:
+        del self.connected_members[user_id]
+        if len(self.connected_members) == 0:
             self.ended = datetime.datetime.now()
             self.dead = True
-        self.telegram_message.set_content(self.connected_users.values(), self.server_name, self.channel_name,
+        self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
                                           self.started, self.ended)
 
 
@@ -127,7 +127,8 @@ class SessionManager:
                                                      channel_name=f'{channel.name}',
                                                      telegram_api=self.telegram_api,
                                                      telegram_chat_id=self.telegram_chat_id,
-                                                     connected_users=list(map(discord_member_to_user, channel.members)))
+                                                     connected_members=list(
+                                                         map(discord_member_to_user, channel.members)))
 
     def member_connected(self, channel: discord.VoiceChannel, member: discord.Member):
         if channel.id not in self.sessions:
@@ -142,7 +143,7 @@ class SessionManager:
                     self.sessions[member.voice.channel.id].user_updated(member.id, discord_member_to_user(member))
                     return
 
-    def member_updated(self, channel: discord.VoiceChannel, member: discord.Member):
+    def member_voice_updated(self, channel: discord.VoiceChannel, member: discord.Member):
         if channel.id in self.sessions:
             self.sessions[channel.id].user_updated(member.id, discord_member_to_user(member))
 

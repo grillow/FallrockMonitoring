@@ -11,7 +11,6 @@ discord_guild_ids = set(map(int, os.getenv('DISCORD_GUILD_IDS').replace(' ', '')
 telegram_token = os.getenv('TELEGRAM_TOKEN')
 telegram_chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
-
 tg = telegram.Bot(token=telegram_token)
 dd = discord.Client(self_bot=True)
 
@@ -48,7 +47,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 session_manager.member_connected(after.channel, member)
         else:
             if after.channel.guild.id in discord_guild_ids:
-                session_manager.member_updated(after.channel, member)
+                session_manager.member_voice_updated(after.channel, member)
 
 
 dd.run(discord_token)
