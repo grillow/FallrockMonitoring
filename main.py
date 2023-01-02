@@ -1,10 +1,7 @@
 import discord
 import telegram
 import model
-from dotenv import load_dotenv
 import os
-
-load_dotenv()
 
 discord_token = os.getenv('DISCORD_TOKEN')
 discord_guild_ids = set(map(int, os.getenv('DISCORD_GUILD_IDS').replace(' ', '').split(',')))
