@@ -17,6 +17,7 @@ session_manager = model.SessionManager(telegram_api=tg, telegram_chat_id=telegra
 @dd.event
 async def on_ready():
     print(f'Logged in as {dd.user}')
+    await dd.change_presence(status=discord.Status.offline)
     for guild in dd.guilds:
         if guild.id in discord_guild_ids:
             for channel in guild.voice_channels:
