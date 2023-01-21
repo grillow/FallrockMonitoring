@@ -55,8 +55,7 @@ def build_users_string(users: []):
 
 def build_message_string(server_name: str, channel_name: str, started: datetime, ended=None, connected_users=None):
     text = ''
-    text += f'Server: {server_name}\n'
-    text += f'Channel: {channel_name}\n'
+    text += f'{server_name} / {channel_name}\n'
     text += f'Started: {started.strftime("%H:%M:%S %d.%m.%Y")}\n'
     if ended is not None:
         text += f'Ended: {ended.strftime("%H:%M:%S %d.%m.%Y")}\n'
