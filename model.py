@@ -46,7 +46,6 @@ def build_user_string(user: UserState):
 def build_users_string(users: []):
     text = ''
     if len(users) != 0:
-        text += f'Users:\n'
         text += '🎤🎧📷🖵\n'
         users_string = '\n'.join(map(build_user_string, users))
         text += f'{users_string}'
