@@ -30,10 +30,10 @@ def build_user_string(user: UserState):
 
     text = ''
     connected = user.connected
-    mic = not (user.mute or user.self_mute)
-    headset = not (user.deaf or user.self_deaf)
-    video = user.self_video
-    stream = user.self_stream
+    mic       = connected and not (user.mute or user.self_mute)
+    headset   = connected and not (user.deaf or user.self_deaf)
+    video     = connected and user.self_video
+    stream    = connected and user.self_stream
 
     text += status(connected)
     text += status(mic)
@@ -123,12 +123,21 @@ class VoiceSession:
                                                 self.started, self.ended)
 
     async def user_disconnected(self, user_id: int):
-        self.connected_members[user_id].connected = False
+        user: UserState = self.connected_members[user_id]
+        user.afk         = None
+        user.deaf        = None
+        user.mute        = None
+        user.self_deaf   = None
+        user.self_deaf   = None
+        user.self_stream = None
+        user.self_video  = None
+        user.connected   = False
+
         if sum(x.connected for x in self.connected_members.values()) == 0:
             self.ended = datetime.datetime.now()
             self.dead = True
-        await self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
-                                                self.started, self.ended)
+
+        await self.user_updated(user_id, user)
 
 
 class SessionManager:
