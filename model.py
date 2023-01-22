@@ -46,7 +46,7 @@ def build_user_string(user: UserState):
 
 def build_users_string(users: []):
     text = ''
-    text += '📶🎤🎧📷🖵\n'
+    text += '📶🎤🎧📷📺\n'
     connected = list(filter(lambda x: x.connected, users))
     unconnected = list(filter(lambda x: not x.connected, users))
     text += '\n'.join(list(map(build_user_string, connected + unconnected)))
