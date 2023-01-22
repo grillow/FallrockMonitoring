@@ -15,14 +15,13 @@ class UserState:
     self_mute: bool
     self_stream: bool
     self_video: bool
-    # suppress: bool
-    # requested_to_speak_at: datetime
+    connected: bool
 
 
-def discord_member_to_user(member: discord.Member):
+def discord_member_to_user(member: discord.Member, connected=False):
     return UserState(member.id, member.name, member.voice.afk, member.voice.deaf, member.voice.mute,
                      member.voice.self_deaf, member.voice.self_mute,
-                     member.voice.self_stream, member.voice.self_video)
+                     member.voice.self_stream, member.voice.self_video, True)
 
 
 def build_user_string(user: UserState):
@@ -30,11 +29,13 @@ def build_user_string(user: UserState):
         return "◻️" if s else "◼"
 
     text = ''
+    connected = user.connected
     mic = not (user.mute or user.self_mute)
     headset = not (user.deaf or user.self_deaf)
     video = user.self_video
     stream = user.self_stream
 
+    text += status(connected)
     text += status(mic)
     text += status(headset)
     text += status(video)
@@ -45,10 +46,10 @@ def build_user_string(user: UserState):
 
 def build_users_string(users: []):
     text = ''
-    if len(users) != 0:
-        text += '🎤🎧📷🖵\n'
-        users_string = '\n'.join(map(build_user_string, users))
-        text += f'{users_string}'
+    text += '🛜🎤🎧📷🖵\n'
+    connected = list(filter(lambda x: x.connected, users))
+    unconnected = list(filter(lambda x: not x.connected, users))
+    text += '\n'.join(list(map(build_user_string, connected + unconnected)))
     return text
 
 
@@ -58,8 +59,7 @@ def build_message_string(server_name: str, channel_name: str, started: datetime,
     text += f'Started: {started.strftime("%H:%M:%S %d.%m.%Y")}\n'
     if ended is not None:
         text += f'Ended: {ended.strftime("%H:%M:%S %d.%m.%Y")}\n'
-    else:
-        text += build_users_string(connected_users)
+    text += build_users_string(connected_users)
     return text
 
 
@@ -123,8 +123,8 @@ class VoiceSession:
                                                 self.started, self.ended)
 
     async def user_disconnected(self, user_id: int):
-        del self.connected_members[user_id]
-        if len(self.connected_members) == 0:
+        self.connected_members[user_id].connected = False
+        if sum(x.connected for x in self.connected_members.values()) == 0:
             self.ended = datetime.datetime.now()
             self.dead = True
         await self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
@@ -150,7 +150,7 @@ class SessionManager:
         if channel.id not in self.sessions:
             await self.create_session(channel)
         else:
-            await self.sessions[channel.id].user_connected(member.id, discord_member_to_user(member))
+            await self.sessions[channel.id].user_connected(member.id, discord_member_to_user(member, True))
 
     async def user_updated(self, user: discord.User):
         for guild in await user.mutual_guilds():
@@ -158,12 +158,12 @@ class SessionManager:
                 if member.id == user.id:
                     if member.voice is not None:
                         await self.sessions[member.voice.channel.id].user_updated(member.id,
-                                                                                  discord_member_to_user(member))
+                                                                                  discord_member_to_user(member, True))
                         return
 
     async def member_voice_updated(self, channel: discord.VoiceChannel, member: discord.Member):
         if channel.id in self.sessions:
-            await self.sessions[channel.id].user_updated(member.id, discord_member_to_user(member))
+            await self.sessions[channel.id].user_updated(member.id, discord_member_to_user(member, True))
 
     async def member_disconnected(self, channel: discord.VoiceChannel, member: discord.Member):
         await self.sessions[channel.id].user_disconnected(member.id)
