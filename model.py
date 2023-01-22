@@ -52,13 +52,12 @@ def build_users_string(users: []):
     return text
 
 
-def build_message_string(server_name: str, channel_name: str, started: datetime, ended=None, connected_users=None, unique_users=None):
+def build_message_string(server_name: str, channel_name: str, started: datetime, ended=None, connected_users=None):
     text = ''
     text += f'{server_name} / {channel_name}\n'
     text += f'Started: {started.strftime("%H:%M:%S %d.%m.%Y")}\n'
     if ended is not None:
         text += f'Ended: {ended.strftime("%H:%M:%S %d.%m.%Y")}\n'
-        text += '\n'.join(unique_users)
     else:
         text += build_users_string(connected_users)
     return text
@@ -79,21 +78,20 @@ class TelegramMessage:
         message_id = telegram_message.message_id
         return TelegramMessage(api, chat_id, message_id)
 
-    async def set_content(self, connected_users, server_name: str, channel_name: str, started: datetime, ended=None, unique_users=None):
+    async def set_content(self, connected_users, server_name: str, channel_name: str, started: datetime, ended=None):
         text = build_message_string(server_name=server_name, channel_name=channel_name, started=started,
-                                    ended=ended, connected_users=connected_users, unique_users=unique_users)
+                                    ended=ended, connected_users=connected_users)
         await self.api.edit_message_text(chat_id=self.chat_id, message_id=self.message_id, text=text)
 
 
 class VoiceSession:
     def __init__(self, server_name: str, channel_name: str, started: datetime, ended: datetime,
-                 connected_members, telegram_message: TelegramMessage, dead: bool):
+                 connected_members: [], telegram_message: TelegramMessage, dead: bool):
         self.server_name = server_name
         self.channel_name = channel_name
         self.started = started
         self.ended = ended
         self.connected_members = connected_members
-        self.unique_members = set(map(lambda x: x.name, self.connected_members.values()))
         self.telegram_message = telegram_message
         self.dead = dead
 
@@ -116,15 +114,13 @@ class VoiceSession:
 
     async def user_connected(self, user_id: int, user: UserState):
         self.connected_members[user_id] = user
-        self.unique_members.append(user.name)
         await self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
-                                                self.started)
+                                                self.started, self.ended)
 
     async def user_updated(self, user_id: int, user: UserState):
         self.connected_members[user_id] = user
-        # TODO: handle nickname change event (or don't)
         await self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
-                                                self.started)
+                                                self.started, self.ended)
 
     async def user_disconnected(self, user_id: int):
         del self.connected_members[user_id]
@@ -132,7 +128,7 @@ class VoiceSession:
             self.ended = datetime.datetime.now()
             self.dead = True
         await self.telegram_message.set_content(self.connected_members.values(), self.server_name, self.channel_name,
-                                                self.started, self.ended, self.unique_members)
+                                                self.started, self.ended)
 
 
 class SessionManager:
