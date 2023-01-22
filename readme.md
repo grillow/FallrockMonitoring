@@ -2,7 +2,7 @@
 
 Notify about Discord voice activity via Telegram.
 
-set environment variables:
+Environment variables:
 
 ```shell
 DISCORD_TOKEN=DISCORDTOKEN
@@ -10,6 +10,8 @@ DISCORD_GUILD_IDS=123,456
 TELEGRAM_TOKEN=TELEGRAMTOKEN
 TELEGRAM_CHAT_ID=123
 ```
+
+If ```DISCORD_GUILD_IDS``` is not set, all joined guilds will be monitored
 
 run:
 
