@@ -1,0 +1,8 @@
+services:
+  FallrockMonitoring:
+    env_file: ".env"
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: fallrockmonitoring
+    restart: always
